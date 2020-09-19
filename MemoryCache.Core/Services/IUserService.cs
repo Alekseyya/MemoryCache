@@ -13,5 +13,7 @@ namespace MemoryCache.Core.Services
        Task<User> GetUser(int id);
        Task<List<User>> SetUsersFromCacheId(int id, List<User> users);
        Task<List<User>> GetUsersFromCacheId(int id);
+       Task<List<User>> GetUsersFromRedis(string id);
+       Task<List<User>> SetUsersFromRedis(string id, List<User> inputUsers);
     }
 }

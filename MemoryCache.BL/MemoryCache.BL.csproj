@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MemmoryCache.Data\MemoryCache.Data.csproj" />
     <ProjectReference Include="..\MemoryCache.Core\MemoryCache.Core.csproj" />
   </ItemGroup>

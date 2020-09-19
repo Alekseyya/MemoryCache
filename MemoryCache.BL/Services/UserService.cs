@@ -3,10 +3,14 @@ using MemoryCache.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using MemoryCache.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
+using Newtonsoft.Json;
 
 namespace MemoryCache.BL.Services
 {
@@ -14,9 +18,12 @@ namespace MemoryCache.BL.Services
     {
         private readonly ApplicationContext _applicationContext;
         private readonly IMemoryCache _memoryCache;
-        public UserService(ApplicationContext applicationContext, IMemoryCache memoryCache)
+        private readonly IDistributedCache _distributedCache;
+
+        public UserService(ApplicationContext applicationContext, IMemoryCache memoryCache, IDistributedCache distributedCache)
         {
             _memoryCache = memoryCache;
+            _distributedCache = distributedCache;
             _applicationContext = applicationContext;
         }
         public void Initialize()
@@ -76,6 +83,39 @@ namespace MemoryCache.BL.Services
                 return Task.FromResult(users);
             }
             return Task.FromResult(users);
+        }
+
+        public async Task<List<User>> GetUsersFromRedis(string id)
+        {
+            var encodedUsers = await _distributedCache.GetAsync(id);
+            string serializeUsers;
+            if (encodedUsers != null)
+            {
+                serializeUsers = Encoding.UTF8.GetString(encodedUsers);
+                return JsonConvert.DeserializeObject<List<User>>(serializeUsers);
+            }
+            return null;
+        }
+
+        public async Task<List<User>> SetUsersFromRedis(string id, List<User> inputUsers)
+        {
+            List<User> userList;
+            var encodedUsers = await _distributedCache.GetAsync(id);
+            string serializeUsers;
+            if (encodedUsers == null)
+            {
+                userList = await _applicationContext.Users.ToListAsync();
+                userList.AddRange(inputUsers);
+                serializeUsers = JsonConvert.SerializeObject(userList);
+                encodedUsers = Encoding.UTF8.GetBytes(serializeUsers);
+                var option = new DistributedCacheEntryOptions()
+                {
+                    AbsoluteExpiration = DateTime.Now.AddMinutes(3)
+                };
+                await _distributedCache.SetAsync(id, encodedUsers, option);
+                return userList;
+            }
+            return null;
         }
 
         public async Task<IEnumerable<User>> GetUsers()

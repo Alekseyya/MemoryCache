@@ -26,6 +26,8 @@ namespace MemoryCache
             services.AddDbContext<ApplicationContext>(p => p.UseNpgsql(Configuration["ConnectionString:DefaultConnection"]));
             services.AddTransient<IUserService, UserService>();
             services.AddMemoryCache();
+            services.AddDistributedMemoryCache();
+            services.AddStackExchangeRedisCache(options => options.Configuration = "localhost:6379");
             //services.AddMvc(option => option.EnableEndpointRouting = false).AddJsonOptions(opt => opt.JsonSerializerOptions.PropertyNamingPolicy = null);
             services.AddControllers();
         }
